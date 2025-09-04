@@ -4,5 +4,5 @@ router = APIRouter()
 
 @router.get("/")
 def read_root():
-    return {"message": "FAST API version2"}
+    return {"message": "FAST API version3"}
 
