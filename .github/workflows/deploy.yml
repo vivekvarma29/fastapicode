@@ -1,0 +1,38 @@
+name: Deploy FastAPI to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2
+        run: |
+          sshpass -p "Batman@123" ssh -o StrictHostKeyChecking=no root@137.184.233.11 << 'EOF'
+            set -e
+            echo "Navigating to home directory..."
+            cd /root || exit 1
+            echo "Stopping existing FastAPI process on port 8000..."
+            sudo lsof -t -i :8000 2>/dev/null | xargs -r sudo kill -9 || echo "No FastAPI process running."
+            echo "Removing old repository..."
+            rm -rf fastapicode
+            echo "Cloning repository..."
+            git clone https://github.com/vivekvarma29/fastapicode.git
+            cd fastapicode || exit 1
+            echo "Creating virtual environment..."
+            python3 -m venv venv
+            echo "Installing dependencies..."
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            echo "Starting FastAPI application..."
+            nohup ./venv/bin/uvicorn server:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
+            echo "Deployment complete."
+          EOF
